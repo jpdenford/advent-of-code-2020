@@ -4,8 +4,10 @@
   "description": "Advent of Code 2020 Solutions",
   "main": "index.js",
   "scripts": {
-    "compile": "tsc -p .",
+    "compile": "tsc -p . --incremental",
+    "clean:compile": "rm -rf ./dist && tsc -p . --incremental",
     "test": "npm run compile && tape ./dist/**/*.unit.js",
+    "test:glob": "npm run compile && tape ",
     "make-it-so": "npm run compile && node dist/index"
   },
   "author": "",
