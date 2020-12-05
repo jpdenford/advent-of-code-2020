@@ -1,5 +1,5 @@
-import fs from 'fs';
 import R from "ramda";
+import { readFileLines } from '../fileUtils';
 
 const convergeToSum = (target: number, sortedNums: number[]): number[] | null => {
   if (sortedNums.length <= 1) return null
@@ -27,12 +27,6 @@ export const findAddendProduct = (targetSum: number, numAddends: number) => (num
   if (!addends) return null
   return R.reduce(R.multiply, 1, addends)
 }
-
-const readFileLines = R.pipe(
-  (filepath: string) => fs.readFileSync(filepath),
-  R.toString,
-  R.split(/\r?\n/)
-)
 
 const linesToNumbers = (lines: string[]) => R.pipe(
   R.map(parseInt),
