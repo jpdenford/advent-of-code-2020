@@ -1,6 +1,6 @@
 
-import main from './reportRepair'
+import { main1 } from './reportRepair'
 
 console.log('Running Day 1')
-const result = main('./src/day1/input.txt')
+const result = main1('./src/day1/input.txt')
 console.log(`result: ${result}`)
