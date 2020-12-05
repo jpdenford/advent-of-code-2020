@@ -1,45 +1,36 @@
-import R, { sort } from "ramda";
-import fs from 'fs'
+import fs from 'fs';
+import R from "ramda";
 
-
-const convergeToNums = (target: number, sortedNums: number[]): number[] | null => {
+const convergeToSum = (target: number, sortedNums: number[]): number[] | null => {
   if (sortedNums.length <= 1) return null
   const lowerNum = R.head(sortedNums)!
   const higherNum = R.last(sortedNums)!
   const sum = lowerNum + higherNum
-  if (sum < target) return convergeToNums(target, R.slice(1, Infinity, sortedNums))
-  if (sum > target) return convergeToNums(target, R.slice(0, -1, sortedNums))
+  if (sum < target) return convergeToSum(target, R.slice(1, Infinity, sortedNums))
+  if (sum > target) return convergeToSum(target, R.slice(0, -1, sortedNums))
   return [lowerNum, higherNum]
 }
 
-
-export const findProductOfSum = (targetSum: number) => (nums: number[]) => {
-  const sortedNums = R.sort(R.ascend(R.identity), nums)
-  const numbers = convergeToNums(targetSum, sortedNums)
-  if (!numbers) return null
-  return R.reduce(R.multiply, 1, numbers)
-}
-
-const xx = (targetSum: number, sortedNums: number[]): number[] | null => {
-  if(R.isEmpty(sortedNums)) return null
+export const findAddends = (targetSum: number, numAddends: number, sortedNums: number[]): number[] | null => {
+  if(numAddends > sortedNums.length) return null
+  if(numAddends === 2) return convergeToSum(targetSum, sortedNums)
   const lowAddend = R.head(sortedNums)!
   const remaining = R.tail(sortedNums)
-  const midAndHighAddends = convergeToNums(targetSum - lowAddend!, remaining)
-  if(midAndHighAddends) return [lowAddend, ...midAndHighAddends]
-  return xx(targetSum, remaining)
+  const higherAddends = findAddends(targetSum - lowAddend, numAddends - 1, remaining)
+  if(!!higherAddends) return [lowAddend, ...higherAddends]
+  return findAddends(targetSum, numAddends, remaining)
 }
 
-export const findProductOfSumOfThree = (targetSum: number) => (nums: number[]) => {
-  const sortedNums = R.sort(R.ascend(R.identity), nums)
-  const numbers = xx(targetSum, sortedNums)
-  console.log('nums', numbers)
-  if (!numbers) return null
-  return R.reduce(R.multiply, 1, numbers)
+export const findAddendProduct = (targetSum: number, numAddends: number) => (numbers: number[]): number | null => {
+  const sortedNums = R.sort(R.ascend(R.identity), numbers)
+  const addends = findAddends(targetSum, numAddends, sortedNums)
+  if (!addends) return null
+  return R.reduce(R.multiply, 1, addends)
 }
 
 const readFileLines = R.pipe(
   (filepath: string) => fs.readFileSync(filepath),
-  R.toString ,
+  R.toString,
   R.split(/\r?\n/)
 )
 
@@ -48,12 +39,9 @@ const linesToNumbers = (lines: string[]) => R.pipe(
   R.reject(isNaN)
 )(lines)
 
-const main1 = (filepath: string) => R.pipe(readFileLines, linesToNumbers, findProductOfSum(2020))(filepath)
+const readIntFile = R.pipe(readFileLines, linesToNumbers)
 
-const main2 = (filepath: string) => R.pipe(readFileLines, linesToNumbers, findProductOfSum(2020))(filepath)
+const main1 = (filepath: string) => R.pipe(readIntFile, findAddendProduct(2020, 2))(filepath)
+const main2 = (filepath: string) => R.pipe(readIntFile, findAddendProduct(2020, 3))(filepath)
 
-export {main1}
-
-
-// [1, 3, 6, 7, 9, 11]
-//  ^     ^        ^
+export { main1, main2 };
