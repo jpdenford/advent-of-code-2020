@@ -41,7 +41,5 @@ const linesToNumbers = (lines: string[]) => R.pipe(
 
 const readIntFile = R.pipe(readFileLines, linesToNumbers)
 
-const main1 = (filepath: string) => R.pipe(readIntFile, findAddendProduct(2020, 2))(filepath)
-const main2 = (filepath: string) => R.pipe(readIntFile, findAddendProduct(2020, 3))(filepath)
-
-export { main1, main2 };
+export const main1 = (filepath: string) => R.pipe(readIntFile, findAddendProduct(2020, 2))(filepath)
+export const main2 = (filepath: string) => R.pipe(readIntFile, findAddendProduct(2020, 3))(filepath)
