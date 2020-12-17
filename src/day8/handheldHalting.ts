@@ -26,25 +26,30 @@ const makeInstruction = (row: string): Operation => {
   return [op, parseInt(num)] as Operation
 }
 
-const applyInstruction = (inst: Operation) => (state: State) => {
+const applyInstruction = (inst: Operation, state: State) => {
   const [op, num] = inst
   const applyInst = {
-    nop: ()
+    nop: (state: State) => ({...state, pointer: state.pointer += 1}),
+    jmp: (state: State) => ({...state, pointer: state.pointer += num}),
+    acc: (state: State) => ({...state, accum: state.accum += num})
   }
+  return applyInst[op](state)
 }
 
 export const makeInstructions = (rows: string[]) => R.map(makeInstruction)(rows)
 
 export const run = (instructions: Operation[]) => {
-  const runWPos = (state: State, instruction: Operation[]) => {
-
-
+  const runWPos = (state: State) => {
+    const nextInstruction = instructions[state.pointer]
+    if(!nextInstruction) throw new Error(`No instruction found @ ${state.pointer}`)
+    const nextState = applyInstruction(nextInstruction, state)
+    runWPos(nextState)
   }
   const state: State = {
     accum: 0,
     pointer: 0
   }
-  runWPos(state, instructions, 0)
+  runWPos(state)
 }
 
 
