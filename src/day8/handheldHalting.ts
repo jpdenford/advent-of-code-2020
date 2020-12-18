@@ -8,9 +8,6 @@ type Jmp = ['jmp', number]
 
 type Operation = Nop | Acc | Jmp
 
-// interface State {
-//   accum: number
-// }
 type State = {
   accum: number
   pointer: number
@@ -18,50 +15,80 @@ type State = {
 
 const lineShape = /\s*(nop|acc|jmp) ([+-][0-9]+)\s*/g
 
-const makeInstruction = (row: string): Operation => {
+const makeOperation = (row: string): Operation => {
   const matched = matchAllGroups(lineShape)(row)
-  if(matched.length != 3) throw new Error('Unknown instruction: ' + matched)
+  if (matched.length !== 3) throw new Error('Unknown operation: ' + matched)
   const instruction = R.tail(matched)
   const [op, num] = instruction
   return [op, parseInt(num)] as Operation
 }
 
-const applyInstruction = (inst: Operation, state: State): State => {
+const applyOperation = (inst: Operation, state: State): State => {
   const [op, num] = inst
   const applyInst = {
-    nop: (state: State) => ({...state, pointer: state.pointer += 1}),
-    jmp: (state: State) => ({...state, pointer: state.pointer += num}),
-    acc: (state: State) => ({...state, accum: state.accum += num, pointer: state.pointer += 1})
+    nop: (state: State) => ({ ...state, pointer: (state.pointer += 1) }),
+    jmp: (state: State) => ({ ...state, pointer: (state.pointer += num) }),
+    acc: (state: State) => ({
+      ...state,
+      accum: (state.accum += num),
+      pointer: (state.pointer += 1),
+    }),
   }
   return applyInst[op](state)
 }
 
-export const makeInstructions = (rows: string[]) => R.map(makeInstruction)(rows)
+export const makeInstructions = (rows: string[]) => R.map(makeOperation)(rows)
 
-export const run = (instructions: Operation[]): number => {
-  const runAndStopOnLoop = (state: State, visited: Set<number>): number => {
-    const nextInstruction = instructions[state.pointer]
-    if(!nextInstruction) throw new Error(`No instruction found @ ${state.pointer}`)
-    const nextState = applyInstruction(nextInstruction, state)
-    console.log(nextState)
-    if(visited.has(nextState.pointer)) {
-      return nextState.accum // end and return state
+export const run = (operations: Operation[]): State => {
+  const runAndStopOnLoop = (state: State, visited: Set<number>): State => {
+    const nextOperation = operations[state.pointer]
+    if (!nextOperation) return state
+    const nextState = applyOperation(nextOperation, state)
+    if (visited.has(nextState.pointer)) {
+      return nextState
     }
     return runAndStopOnLoop(nextState, visited.add(nextState.pointer))
   }
-  const state: State = { accum: 0, pointer: 0 }
-  return runAndStopOnLoop(state, new Set())
+
+  const initialState: State = { accum: 0, pointer: 0 }
+  return runAndStopOnLoop(initialState, new Set())
 }
 
+const readIn = R.pipe(
+  readFileLines,
+  R.filter((l) => !!l)
+)
 
 export const main1 = R.pipe(
-  readFileLines,
-  R.filter(l => !!l),
+  readIn,
   makeInstructions,
   run,
+  R.prop('accum'),
   JSON.stringify
 )
 
+const replaceInstruction = (pointer: number, operations: Operation[]): Operation[] | null => {
+  const opType = operations[pointer][0]
+  if (opType === 'jmp') return R.update(pointer, ['nop', operations[pointer][1]], operations)
+  else if (opType === 'nop') return R.update(pointer, ['jmp', operations[pointer][1]], operations)
+  return null
+}
+
+const copyEachReplaceable = (ops: Operation[]): Operation[][] =>
+  ops.map((_, ind, all) => replaceInstruction(ind, all))
+    .filter((replaced: Operation[] |  null) => replaced !== null) as any
+
+export const findWithHighestPointer = R.pipe(
+  copyEachReplaceable,
+  R.map(run),
+  R.sortBy(R.prop('pointer')),
+  (states: State[]): State => R.last(states)!
+)
+
 export const main2 = R.pipe(
-  readFileLines
+  readIn,
+  makeInstructions,
+  findWithHighestPointer,
+  R.prop('accum'),
+  JSON.stringify
 )
