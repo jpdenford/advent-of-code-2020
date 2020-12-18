@@ -51,7 +51,6 @@ export const main1 = (filepath: string) =>
   R.pipe(
     readFileLines,
     R.filter((l) => !!l),
-    R.tap((l) => console.log('total leng', l.length)),
     R.map(lineIsValid(rule1)),
     countValid
   )(filepath)
@@ -60,7 +59,6 @@ export const main2 = (filepath: string) =>
   R.pipe(
     readFileLines,
     R.filter((l) => !!l),
-    R.tap((l) => console.log('total leng', l.length)),
     R.map(lineIsValid(rule2)),
     countValid
   )(filepath)
