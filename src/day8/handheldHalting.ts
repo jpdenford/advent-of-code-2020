@@ -26,35 +26,37 @@ const makeInstruction = (row: string): Operation => {
   return [op, parseInt(num)] as Operation
 }
 
-const applyInstruction = (inst: Operation, state: State) => {
+const applyInstruction = (inst: Operation, state: State): State => {
   const [op, num] = inst
   const applyInst = {
     nop: (state: State) => ({...state, pointer: state.pointer += 1}),
     jmp: (state: State) => ({...state, pointer: state.pointer += num}),
-    acc: (state: State) => ({...state, accum: state.accum += num})
+    acc: (state: State) => ({...state, accum: state.accum += num, pointer: state.pointer += 1})
   }
   return applyInst[op](state)
 }
 
 export const makeInstructions = (rows: string[]) => R.map(makeInstruction)(rows)
 
-export const run = (instructions: Operation[]) => {
-  const runWPos = (state: State) => {
+export const run = (instructions: Operation[]): number => {
+  const runAndStopOnLoop = (state: State, visited: Set<number>): number => {
     const nextInstruction = instructions[state.pointer]
     if(!nextInstruction) throw new Error(`No instruction found @ ${state.pointer}`)
     const nextState = applyInstruction(nextInstruction, state)
-    runWPos(nextState)
+    console.log(nextState)
+    if(visited.has(nextState.pointer)) {
+      return nextState.accum // end and return state
+    }
+    return runAndStopOnLoop(nextState, visited.add(nextState.pointer))
   }
-  const state: State = {
-    accum: 0,
-    pointer: 0
-  }
-  runWPos(state)
+  const state: State = { accum: 0, pointer: 0 }
+  return runAndStopOnLoop(state, new Set())
 }
 
 
 export const main1 = R.pipe(
   readFileLines,
+  R.filter(l => !!l),
   makeInstructions,
   run,
   JSON.stringify
