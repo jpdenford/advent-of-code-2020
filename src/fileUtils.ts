@@ -6,6 +6,10 @@ export const readFile = R.pipe(
   R.toString
 )
 
+export const truthy = <T>(x: T|undefined|null): boolean => !!x // !== null && x !== undefined
+
+export const removeEmpty = R.filter(truthy)
+
 export const readFileLines = R.pipe(
   readFile,
   R.split(/\r?\n/)
