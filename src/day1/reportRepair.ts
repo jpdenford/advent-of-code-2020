@@ -1,5 +1,5 @@
-import R from "ramda";
-import { readFileLines } from '../fileUtils';
+import R from 'ramda'
+import { readFileLines } from '../fileUtils'
 
 const convergeToSum = (target: number, sortedNums: number[]): number[] | null => {
   if (sortedNums.length <= 1) return null
@@ -11,27 +11,33 @@ const convergeToSum = (target: number, sortedNums: number[]): number[] | null =>
   return [lowerNum, higherNum]
 }
 
-export const findAddends = (targetSum: number, numAddends: number, sortedNums: number[]): number[] | null => {
-  if(numAddends > sortedNums.length) return null
-  if(numAddends === 2) return convergeToSum(targetSum, sortedNums)
+export const findAddendsSorted = (targetSum: number, numAddends: number, sortedNums: number[]): number[] | null => {
+  if (numAddends > sortedNums.length) return null
+  if (numAddends === 2) return convergeToSum(targetSum, sortedNums)
   const lowAddend = R.head(sortedNums)!
   const remaining = R.tail(sortedNums)
-  const higherAddends = findAddends(targetSum - lowAddend, numAddends - 1, remaining)
-  if(!!higherAddends) return [lowAddend, ...higherAddends]
-  return findAddends(targetSum, numAddends, remaining)
+  const higherAddends = findAddendsSorted(targetSum - lowAddend, numAddends - 1, remaining)
+  if (!!higherAddends) return [lowAddend, ...higherAddends]
+  return findAddendsSorted(targetSum, numAddends, remaining)
 }
 
-export const findAddendProduct = (targetSum: number, numAddends: number) => (numbers: number[]): number | null => {
+export const findAddends = (targetSum: number, numAddends: number) => (numbers: number[]): number[] | null => {
   const sortedNums = R.sort(R.ascend(R.identity), numbers)
-  const addends = findAddends(targetSum, numAddends, sortedNums)
-  if (!addends) return null
-  return R.reduce(R.multiply, 1, addends)
+  const addends = findAddendsSorted(targetSum, numAddends, sortedNums)
+  return addends
 }
+
+export const findAddendProduct = (targetSum: number, numAddends: number) =>
+  (numbers: number[]): number | null => {
+    const addends = findAddends(targetSum, numAddends)(numbers)
+    if (!addends) return null
+    return R.reduce(R.multiply, 1, addends)
+  }
 
 const linesToNumbers = (lines: string[]) => R.pipe(
   R.map(parseInt),
   R.reject(isNaN)
-)(lines)
+  )(lines)
 
 const readIntFile = R.pipe(readFileLines, linesToNumbers)
 
