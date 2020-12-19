@@ -18,7 +18,6 @@ test('3.1 (example)', (t) => {
 .#..#...#.#`
 
   const split = R.split('\n')(input)
-  console.log('split result', split)
   const result = encounteredTrees(split)({ x: 3, y: 1 })
   t.equal(result, 7)
 })
