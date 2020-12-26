@@ -1,3 +1,4 @@
+import R from 'ramda'
 
 export const splitWhenEvery = (predicate: (first?: number, second?:number) => boolean) => (ns: number[]): number[][] => {
   if(ns.length === 0) return []
@@ -13,3 +14,8 @@ export const splitWhenEvery = (predicate: (first?: number, second?:number) => bo
   }
   return [chunk]
 }
+
+
+export const naturally = R.ascend(R.identity)
+
+export const natSort = R.sort(naturally)

@@ -1,4 +1,4 @@
-import R, { split } from 'ramda'
+import R from 'ramda'
 import { readFileLines, removeEmpty } from '../fileUtils'
 import { splitWhenEvery } from '../listUtils'
 
@@ -22,7 +22,6 @@ export const multiplyCounts = (diffs: number[]): number => {
   const counts = Object.values(occurrences)
   return R.reduce(R.multiply as any, 1, counts)
 }
-
 
 const calculateDiffsWithExtra = R.pipe(addBuiltInAdapterAndOutlet, calculateGaps)
 
@@ -48,35 +47,35 @@ const countSequences = (ns: number[]): { num: number; count: number }[] => {
 
 const asString = (ns: number[]) => ns.join(',')
 
+// find valid replacements for all possible ns except first and last
 export const findRemovalsForRange = (numbers: number[]): string[] => {
   const gapsAreOkaySize = (sortedNums: number[]): boolean => {
     if(sortedNums.length <= 1) return true
     if(sortedNums[1] - sortedNums[0] > 3) return false
     return gapsAreOkaySize(R.tail(sortedNums))
   }
-  // rather inefficient as combinations will be recalculated
   const recurseSubstitutes = (ns: number[]): string[] => {
     if(!gapsAreOkaySize(ns)) return []
     const combs = ns.map((n, i, all): string[] => {
       // outer numbers can't be substituted
       if(i === 0 || i === all.length - 1) return []
       const removed = R.remove(i, 1, all)
-      return [asString(removed), ...recurseSubstitutes(removed)]
+      return recurseSubstitutes(removed)
     }).flat()
-    return Array.from(new Set(combs))
+  // rather inefficient as combinations will be recalculated
+    return Array.from(new Set(combs.concat(asString(ns))))
   }
 
   const sorted = R.sort(R.ascend(R.identity), numbers)
   if(sorted.length == 0) return []
   if(sorted.length <= 2) return [asString(sorted)]
-  return [asString(sorted), ...recurseSubstitutes(sorted)].filter(x => !!x)
+  return recurseSubstitutes(sorted).filter(x => !!x)
 }
 
 export const main1 = R.pipe(readIn, calculateProductOfCounts, JSON.stringify)
 
 export const calculateCombinations = R.pipe(
   calculateDiffsWithExtra,
-  // R.tap(console.log),
   countSequences,
   R.filter((c: { num: number }) => c.num === 1),
   R.map((c) => c.count),
@@ -84,29 +83,18 @@ export const calculateCombinations = R.pipe(
 )
 
 
-export const calcCombs = (ns: number[]) => {
-  const withExtra = addBuiltInAdapterAndOutlet(ns)
-  const sorted = withExtra.sort(R.ascend(R.identity))
-  console.log('ns', sorted)
-  const foo = splitWhenEvery((a?: number, b?: number) => (b ?? 0) - (a ?? 0) >= 3)(sorted)
-  const largerThan1 = foo.filter(x => x.length !== 1)
-  console.log('largerthan1', largerThan1)
-  // const iterations = largerThan1.map(calculateDiffs)
-  // console.log('iterations', iterations)
-  const combs = largerThan1.map(R.pipe(
-    // calculateGaps,
+export const validCombinations = (ns: number[]) => {
+  const withFirstAndLast = addBuiltInAdapterAndOutlet(ns)
+  const sorted = withFirstAndLast.sort(R.ascend(R.identity))
+  const sequentialChunks = splitWhenEvery((a?: number, b?: number) => (b ?? 0) - (a ?? 0) >= 3)(sorted)
+  const combs = sequentialChunks.map(R.pipe(
     findRemovalsForRange,
-    // countSequences,
-    rems => rems.length
-    // R.filter((c: { num: number }) => c.num === 1),
-    // R.map((c) => c.count),
-    // R.reduce(R.multiply, 1))
-    ))
-  console.log('combs', combs)
-  console.log('n', R.reduce(R.multiply, 1, combs))
+    R.length
+  ))
+  return R.reduce(R.multiply, 1, combs)
 }
 
-export const main2 = R.pipe(readIn, calculateCombinations, JSON.stringify)
+export const main2 = R.pipe(readIn, validCombinations, JSON.stringify)
 
 
 // some examples
@@ -122,14 +110,14 @@ export const main2 = R.pipe(readIn, calculateCombinations, JSON.stringify)
 //d 3 1 1 1 3 -> 4
 
 
-// 0 3 4 5 6 7 10
-// 0 3 _ 5 6 7 10
-// 0 3 _ _ 6 7 10
-// 0 3 4 _ 6 7 10
-// 0 3 4 _ _ 7 10
-// 0 3 4 5 _ 7 10
-// 0 3 _ 5 _ 7 10
-//d 3 1 1 1 1 3 -> 6
+// 0 1 2 3 4
+// 0 _ 2 3 4
+// 0 _ _ 3 4
+// 0 1 _ 3 4
+// 0 1 _ _ 4
+// 0 1 2 _ 4
+// 0 _ 2 _ 4
+//d 1 1 1 1 -> 7
 
 // 0 3 4 5 6 7 8 11
 // 0 3 _ 5 6 7 8 11
