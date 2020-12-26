@@ -51,7 +51,7 @@ test('splitWhenEvery/ split only', (t) => {
 })
 
 
-test('splitWhenEvery/ xxxx', (t) => {
+test('splitWhenEvery/ larger example', (t) => {
   t.plan(1)
   const input: number[] = [
     1,  2,  3,  4,  7,  8,  9, 10, 11,
